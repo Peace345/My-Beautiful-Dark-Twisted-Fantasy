@@ -75,9 +75,22 @@ let currentAlbum = {
       { file: "sweatonmyface.mp3", title: "Sweat On My Face", artist: "Kanye West, Talib Kweli, Consequence, Mos Def" },
       { file: "pure.mp3", title: "Pure", artist: "Kanye West, Mr. Hudson" },
       { file: "hellofalife.mp3", title: "Hell Of A Life", artist: "Kanye West, Bon Iver" },
-      { file: "higher.mp3", title: "Higher", artist: "Kanye West" },
-      { file: "higherv6.mp3", title: "Higher (v6)", artist: "Kanye West, Nicki Minaj, Bon Iver" },
-      { file: "ghettouniversityv24.mp3", title: "Ghetto University (v24)", artist: "Kanye West, Charlie Wilson, Tony Williams, John Legend" }
+      {
+        title: "Higher",
+        versions: [
+      {
+        version: "V1",
+        file: "higher.mp3",
+        artist: "Kanye West"
+      },
+      {
+        version: "V6",
+        file: "higherv6.mp3",
+        artist: "Kanye West, Nicki Minaj, Bon Iver"
+      }
+    ]
+  },
+      { file: "ghettouniversityv24.mp3", title: "Ghetto University", artist: "Kanye West, Charlie Wilson, Tony Williams, John Legend" }
   ]
 };
 
@@ -98,18 +111,77 @@ function buildSongs() {
   songsDiv.innerHTML = "";
 
   currentAlbum.songs.forEach((song, i) => {
-    const div = document.createElement("div");
-    div.className = "song";
 
-    div.innerHTML = `
-      <strong>${song.title}</strong><br>
-      <small>${song.artist || ""}</small>
-    `;
+    // SONG WITH MULTIPLE VERSIONS
+    if (song.versions) {
 
-    div.onclick = () => playSong(i);
+      const group = document.createElement("div");
+      group.className = "song";
 
-    songsDiv.appendChild(div);
+      group.innerHTML = `<strong>${song.title} ▼</strong>`;
+
+      group.onclick = () => {
+
+        // prevent duplicates
+        if (group.dataset.opened) return;
+        group.dataset.opened = true;
+
+        song.versions.forEach(version => {
+
+          const div = document.createElement("div");
+          div.className = "song";
+
+          div.innerHTML = `
+            <div style="display:flex;">
+              <div style="width:50px;"><strong>${version.version}</strong></div>
+              <div>
+                <strong>${song.title}</strong><br>
+                <small>${version.artist}</small>
+              </div>
+            </div>
+          `;
+
+          div.onclick = (e) => {
+            e.stopPropagation();
+
+            window.audio.src = version.file;
+            window.audio.play();
+
+            updateMediaSession({
+              title: song.title,
+              artist: version.artist
+            });
+          };
+
+          group.after(div);
+
+        });
+
+      };
+
+      songsDiv.appendChild(group);
+
+    }
+
+    // NORMAL SONG
+    else {
+
+      const div = document.createElement("div");
+      div.className = "song";
+
+      div.innerHTML = `
+        <strong>${song.title}</strong><br>
+        <small>${song.artist || ""}</small>
+      `;
+
+      div.onclick = () => playSong(i);
+
+      songsDiv.appendChild(div);
+
+    }
+
   });
+
 }
 
 // PLAY SONG
