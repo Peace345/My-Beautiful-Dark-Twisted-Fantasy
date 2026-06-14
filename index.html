@@ -189,6 +189,27 @@ function buildSongs() {
 
 // PLAY SONG
 function playSong(i) {
+
+  // Skip version groups
+  while (
+    i < currentAlbum.songs.length &&
+    currentAlbum.songs[i].versions
+  ) {
+    i++;
+  }
+
+  // Loop back to beginning if needed
+  if (i >= currentAlbum.songs.length) {
+    i = 0;
+
+    while (
+      i < currentAlbum.songs.length &&
+      currentAlbum.songs[i].versions
+    ) {
+      i++;
+    }
+  }
+
   currentIndex = i;
 
   const song = currentAlbum.songs[i];
