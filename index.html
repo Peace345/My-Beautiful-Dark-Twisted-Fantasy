@@ -203,15 +203,17 @@ function buildSongs() {
 
 }
 
+let currentVersionIndex = null;
+  
 // PLAY SONG
-function playSong(i) {
+function playSong(i, versionIndex = 0) {
   currentIndex = i;
 
   const song = currentAlbum.songs[i];
 
-  // If this is a version group, play the latest version
+  // Version group
   if (song.versions) {
-    const version = song.versions[song.versions.length - 1];
+    const version = song.versions[versionIndex];
 
     window.audio.src = version.file;
     window.audio.play();
@@ -221,15 +223,44 @@ function playSong(i) {
       artist: version.artist
     });
 
+    // Remember which version is playing
+    currentVersionIndex = versionIndex;
+
     return;
   }
 
   // Normal song
+  currentVersionIndex = null;
+
   window.audio.src = song.file;
   window.audio.play();
 
   updateMediaSession(song, currentAlbum);
 }
+
+audio.addEventListener("ended", () => {
+  if (!currentAlbum) return;
+
+  const song = currentAlbum.songs[currentIndex];
+
+  // If we're currently playing a version group
+  if (song.versions) {
+    const nextVersion = currentVersionIndex + 1;
+
+    // There is another version → play it
+    if (nextVersion < song.versions.length) {
+      playSong(currentIndex, nextVersion);
+      return;
+    }
+  }
+
+  // No more versions → move to the next album song
+  if (currentIndex < currentAlbum.songs.length - 1) {
+    playSong(currentIndex + 1);
+  } else {
+    playSong(0);
+  }
+});
 
 function updateMediaSession(song) {
   if (!('mediaSession' in navigator)) return;
