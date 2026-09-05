@@ -386,28 +386,32 @@ audio.addEventListener("ended", () => {
   const song = currentAlbum.songs[currentIndex];
 
   // VERSION GROUP
-  if (song.versions) {
+  if (
+    song.versions &&
+    currentVersionIndex !== null
+  ) {
 
-    // Move toward the beginning of the array.
-    // Example:
-    // V6 = index 0
-    // V1 = index 1
-    //
-    // Start at V1 (index 1)
-    // Then go to V6 (index 0)
-
+    // V1 (index 1) → V6 (index 0)
     if (currentVersionIndex > 0) {
 
-      playSong(
-        currentIndex,
-        currentVersionIndex - 1
-      );
+      currentVersionIndex--;
+
+      const version = song.versions[currentVersionIndex];
+
+      window.audio.src = version.file;
+
+      window.audio.play();
+
+      updateMediaSession({
+        title: song.title,
+        artist: version.artist
+      });
 
       return;
     }
 
-    // All versions are finished.
-    // Continue to the next album song.
+    // Versions are completely finished
+    currentVersionIndex = null;
   }
 
   // NEXT ALBUM SONG
