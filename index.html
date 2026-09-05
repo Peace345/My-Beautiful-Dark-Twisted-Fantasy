@@ -235,7 +235,6 @@ function buildSongs() {
 
 // PLAY SONG
 function playSong(i, versionIndex = null) {
-
   currentIndex = i;
 
   const song = currentAlbum.songs[i];
@@ -243,9 +242,8 @@ function playSong(i, versionIndex = null) {
   // VERSION GROUP
   if (song.versions) {
 
-    // Start with the LOWEST version.
-    // Your array is highest → lowest,
-    // so the lowest version is the LAST item.
+    // When autoplay first reaches this group,
+    // start with the LOWEST-numbered version.
     if (versionIndex === null) {
       versionIndex = song.versions.length - 1;
     }
@@ -255,6 +253,7 @@ function playSong(i, versionIndex = null) {
     const version = song.versions[versionIndex];
 
     window.audio.src = version.file;
+
     window.audio.play();
 
     updateMediaSession({
@@ -265,7 +264,6 @@ function playSong(i, versionIndex = null) {
     return;
   }
 
-
   // NORMAL SONG
   currentVersionIndex = null;
 
@@ -274,7 +272,6 @@ function playSong(i, versionIndex = null) {
 
   updateMediaSession(song);
 }
-
 
 // MEDIA SESSION
 function updateMediaSession(song) {
@@ -389,23 +386,40 @@ audio.addEventListener("ended", () => {
   const song = currentAlbum.songs[currentIndex];
 
   // VERSION GROUP
-  if (song.versions && currentVersionIndex !== null) {
+  if (song.versions) {
 
-    // Move to the next version in LOWEST → HIGHEST order
-    const nextVersionIndex = currentVersionIndex - 1;
+    // Move toward the beginning of the array.
+    // Example:
+    // V6 = index 0
+    // V1 = index 1
+    //
+    // Start at V1 (index 1)
+    // Then go to V6 (index 0)
 
-    if (nextVersionIndex >= 0) {
-      playSong(currentIndex, nextVersionIndex);
+    if (currentVersionIndex > 0) {
+
+      playSong(
+        currentIndex,
+        currentVersionIndex - 1
+      );
+
       return;
     }
+
+    // All versions are finished.
+    // Continue to the next album song.
   }
 
-  // Finished all versions → next album song
+  // NEXT ALBUM SONG
   if (currentIndex < currentAlbum.songs.length - 1) {
+
     playSong(currentIndex + 1);
+
   } else {
-    // End of album → start again
+
+    // Album finished → restart
     playSong(0);
+
   }
 
 });
