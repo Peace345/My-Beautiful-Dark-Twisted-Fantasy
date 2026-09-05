@@ -320,31 +320,31 @@ function updateMediaSession(song) {
     }
   });
 
-  navigator.mediaSession.setActionHandler("nexttrack", () => {
+ navigator.mediaSession.setActionHandler("nexttrack", () => {
 
-    if (!currentAlbum) return;
+  if (!currentAlbum) return;
 
-    const song = currentAlbum.songs[currentIndex];
+  const song = currentAlbum.songs[currentIndex];
 
-    // If playing a version, go to the next version
-    if (
-      song.versions &&
-      currentVersionIndex !== null &&
-      currentVersionIndex < song.versions.length - 1
-    ) {
-      playSong(currentIndex, currentVersionIndex + 1);
-      return;
-    }
+  // If playing a version, move toward the beginning
+  // of the versions array.
+  if (
+    song.versions &&
+    currentVersionIndex !== null &&
+    currentVersionIndex > 0
+  ) {
+    playSong(currentIndex, currentVersionIndex - 1);
+    return;
+  }
 
-    // Otherwise go to next album track
-    if (currentIndex < currentAlbum.songs.length - 1) {
-      playSong(currentIndex + 1);
-    } else {
-      playSong(0);
-    }
-  });
-}
+  // All versions finished → next album song
+  if (currentIndex < currentAlbum.songs.length - 1) {
+    playSong(currentIndex + 1);
+  } else {
+    playSong(0);
+  }
 
+});
 
 // PLAY / PAUSE BUTTON
 function togglePlay() {
