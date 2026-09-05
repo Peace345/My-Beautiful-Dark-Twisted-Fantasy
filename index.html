@@ -206,14 +206,23 @@ function buildSongs() {
 let currentVersionIndex = null;
   
 // PLAY SONG
-function playSong(i, versionIndex = 0) {
+function playSong(i, versionIndex = null) {
   currentIndex = i;
 
   const song = currentAlbum.songs[i];
 
-  // Version group
+  // SONG WITH MULTIPLE VERSIONS
   if (song.versions) {
+
+    // If no version was specified, start with the LAST version
+    // because your versions are stored highest → lowest.
+    if (versionIndex === null) {
+      versionIndex = song.versions.length - 1;
+    }
+
     const version = song.versions[versionIndex];
+
+    currentVersionIndex = versionIndex;
 
     window.audio.src = version.file;
     window.audio.play();
@@ -223,13 +232,10 @@ function playSong(i, versionIndex = 0) {
       artist: version.artist
     });
 
-    // Remember which version is playing
-    currentVersionIndex = versionIndex;
-
     return;
   }
 
-  // Normal song
+  // NORMAL SONG
   currentVersionIndex = null;
 
   window.audio.src = song.file;
@@ -237,30 +243,6 @@ function playSong(i, versionIndex = 0) {
 
   updateMediaSession(song, currentAlbum);
 }
-
-audio.addEventListener("ended", () => {
-  if (!currentAlbum) return;
-
-  const song = currentAlbum.songs[currentIndex];
-
-  // If we're currently playing a version group
-  if (song.versions) {
-    const nextVersion = currentVersionIndex + 1;
-
-    // There is another version → play it
-    if (nextVersion < song.versions.length) {
-      playSong(currentIndex, nextVersion);
-      return;
-    }
-  }
-
-  // No more versions → move to the next album song
-  if (currentIndex < currentAlbum.songs.length - 1) {
-    playSong(currentIndex + 1);
-  } else {
-    playSong(0);
-  }
-});
 
 function updateMediaSession(song) {
   if (!('mediaSession' in navigator)) return;
@@ -327,12 +309,29 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const audio = document.getElementById("audio");
 
- audio.addEventListener("ended", () => {
+audio.addEventListener("ended", () => {
   if (!currentAlbum) return;
 
+  const song = currentAlbum.songs[currentIndex];
+
+  // If this is a version group
+  if (song.versions) {
+
+    // Move BACKWARD through the array:
+    // V1 → V2 → V3 → V4 → ... → V6
+    const nextVersion = currentVersionIndex - 1;
+
+    if (nextVersion >= 0) {
+      playSong(currentIndex, nextVersion);
+      return;
+    }
+  }
+
+  // Finished the song/version group → next album track
   if (currentIndex < currentAlbum.songs.length - 1) {
     playSong(currentIndex + 1);
   } else {
+    // End of album → start album over
     playSong(0);
   }
 });
