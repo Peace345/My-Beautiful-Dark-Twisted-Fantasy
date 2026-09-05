@@ -235,6 +235,7 @@ function buildSongs() {
 
 // PLAY SONG
 function playSong(i, versionIndex = null) {
+
   currentIndex = i;
 
   const song = currentAlbum.songs[i];
@@ -242,8 +243,9 @@ function playSong(i, versionIndex = null) {
   // VERSION GROUP
   if (song.versions) {
 
-    // When autoplay first reaches this group,
-    // start with the LOWEST-numbered version.
+    // Start with the LOWEST version.
+    // Your array is highest → lowest,
+    // so the lowest version is the LAST item.
     if (versionIndex === null) {
       versionIndex = song.versions.length - 1;
     }
@@ -253,7 +255,6 @@ function playSong(i, versionIndex = null) {
     const version = song.versions[versionIndex];
 
     window.audio.src = version.file;
-
     window.audio.play();
 
     updateMediaSession({
@@ -264,6 +265,7 @@ function playSong(i, versionIndex = null) {
     return;
   }
 
+
   // NORMAL SONG
   currentVersionIndex = null;
 
@@ -272,6 +274,7 @@ function playSong(i, versionIndex = null) {
 
   updateMediaSession(song);
 }
+
 
 // MEDIA SESSION
 function updateMediaSession(song) {
@@ -320,31 +323,31 @@ function updateMediaSession(song) {
     }
   });
 
- navigator.mediaSession.setActionHandler("nexttrack", () => {
+  navigator.mediaSession.setActionHandler("nexttrack", () => {
 
-  if (!currentAlbum) return;
+    if (!currentAlbum) return;
 
-  const song = currentAlbum.songs[currentIndex];
+    const song = currentAlbum.songs[currentIndex];
 
-  // If playing a version, move toward the beginning
-  // of the versions array.
-  if (
-    song.versions &&
-    currentVersionIndex !== null &&
-    currentVersionIndex > 0
-  ) {
-    playSong(currentIndex, currentVersionIndex - 1);
-    return;
-  }
+    // If playing a version, go to the next version
+    if (
+      song.versions &&
+      currentVersionIndex !== null &&
+      currentVersionIndex < song.versions.length - 1
+    ) {
+      playSong(currentIndex, currentVersionIndex + 1);
+      return;
+    }
 
-  // All versions finished → next album song
-  if (currentIndex < currentAlbum.songs.length - 1) {
-    playSong(currentIndex + 1);
-  } else {
-    playSong(0);
-  }
+    // Otherwise go to next album track
+    if (currentIndex < currentAlbum.songs.length - 1) {
+      playSong(currentIndex + 1);
+    } else {
+      playSong(0);
+    }
+  });
+}
 
-});
 
 // PLAY / PAUSE BUTTON
 function togglePlay() {
@@ -379,60 +382,44 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
   // AUTOPLAY THROUGH ALBUM
-audio.addEventListener("ended", () => {
+  audio.addEventListener("ended", () => {
 
-  console.log("ENDED FIRED", {
-    currentIndex,
-    currentVersionIndex,
-    song: currentAlbum.songs[currentIndex]
-  });
+    if (!currentAlbum) return;
 
-  if (!currentAlbum) return;
+    const song = currentAlbum.songs[currentIndex];
 
-  const song = currentAlbum.songs[currentIndex];
 
-  // VERSION GROUP
-  if (
-    song.versions &&
-    currentVersionIndex !== null
-  ) {
+    // VERSION GROUP
+    if (
+      song.versions &&
+      currentVersionIndex !== null
+    ) {
 
-    // V1 (index 1) → V6 (index 0)
-    if (currentVersionIndex > 0) {
+      // Your versions are stored:
+      // V6 → V5 → V4 → V1
+      //
+      // So autoplay moves backward through the array:
+      // V1 → V4 → V5 → V6
 
-      currentVersionIndex--;
+      const nextVersion = currentVersionIndex - 1;
 
-      const version = song.versions[currentVersionIndex];
-
-      window.audio.src = version.file;
-
-      window.audio.play();
-
-      updateMediaSession({
-        title: song.title,
-        artist: version.artist
-      });
-
-      return;
+      if (nextVersion >= 0) {
+        playSong(currentIndex, nextVersion);
+        return;
+      }
     }
 
-    // Versions are completely finished
-    currentVersionIndex = null;
-  }
 
-  // NEXT ALBUM SONG
-  if (currentIndex < currentAlbum.songs.length - 1) {
+    // FINISHED ALL VERSIONS
+    // Move to the next album track
+    if (currentIndex < currentAlbum.songs.length - 1) {
+      playSong(currentIndex + 1);
+    } else {
+      // End of album → restart album
+      playSong(0);
+    }
 
-    playSong(currentIndex + 1);
-
-  } else {
-
-    // Album finished → restart
-    playSong(0);
-
-  }
-
-});
+  });
 
 
   // BUILD THE SONG LIST
