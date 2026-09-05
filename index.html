@@ -382,44 +382,33 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
   // AUTOPLAY THROUGH ALBUM
-  audio.addEventListener("ended", () => {
+audio.addEventListener("ended", () => {
 
-    if (!currentAlbum) return;
+  if (!currentAlbum) return;
 
-    const song = currentAlbum.songs[currentIndex];
+  const song = currentAlbum.songs[currentIndex];
 
+  // VERSION GROUP
+  if (song.versions && currentVersionIndex !== null) {
 
-    // VERSION GROUP
-    if (
-      song.versions &&
-      currentVersionIndex !== null
-    ) {
+    // Move to the next version in LOWEST → HIGHEST order
+    const nextVersionIndex = currentVersionIndex - 1;
 
-      // Your versions are stored:
-      // V6 → V5 → V4 → V1
-      //
-      // So autoplay moves backward through the array:
-      // V1 → V4 → V5 → V6
-
-      const nextVersion = currentVersionIndex - 1;
-
-      if (nextVersion >= 0) {
-        playSong(currentIndex, nextVersion);
-        return;
-      }
+    if (nextVersionIndex >= 0) {
+      playSong(currentIndex, nextVersionIndex);
+      return;
     }
+  }
 
+  // Finished all versions → next album song
+  if (currentIndex < currentAlbum.songs.length - 1) {
+    playSong(currentIndex + 1);
+  } else {
+    // End of album → start again
+    playSong(0);
+  }
 
-    // FINISHED ALL VERSIONS
-    // Move to the next album track
-    if (currentIndex < currentAlbum.songs.length - 1) {
-      playSong(currentIndex + 1);
-    } else {
-      // End of album → restart album
-      playSong(0);
-    }
-
-  });
+});
 
 
   // BUILD THE SONG LIST
