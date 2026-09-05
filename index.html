@@ -205,31 +205,26 @@ function buildSongs() {
 
 // PLAY SONG
 function playSong(i) {
-
-  // Skip version groups
-  while (
-    i < currentAlbum.songs.length &&
-    currentAlbum.songs[i].versions
-  ) {
-    i++;
-  }
-
-  // Loop back to beginning if needed
-  if (i >= currentAlbum.songs.length) {
-    i = 0;
-
-    while (
-      i < currentAlbum.songs.length &&
-      currentAlbum.songs[i].versions
-    ) {
-      i++;
-    }
-  }
-
   currentIndex = i;
 
   const song = currentAlbum.songs[i];
 
+  // If this is a version group, play the latest version
+  if (song.versions) {
+    const version = song.versions[song.versions.length - 1];
+
+    window.audio.src = version.file;
+    window.audio.play();
+
+    updateMediaSession({
+      title: song.title,
+      artist: version.artist
+    });
+
+    return;
+  }
+
+  // Normal song
   window.audio.src = song.file;
   window.audio.play();
 
@@ -301,21 +296,13 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const audio = document.getElementById("audio");
 
-  audio.addEventListener("ended", () => {
+ audio.addEventListener("ended", () => {
   if (!currentAlbum) return;
 
-  const list = getPlayableSongs();
-
-  const currentSong = currentAlbum.songs[currentIndex];
-  const nextIndex = list.indexOf(currentSong) + 1;
-
-  if (nextIndex < list.length) {
-    const nextSong = list[nextIndex];
-
-    const realIndex = currentAlbum.songs.indexOf(nextSong);
-    playSong(realIndex);
+  if (currentIndex < currentAlbum.songs.length - 1) {
+    playSong(currentIndex + 1);
   } else {
-    playSong(currentAlbum.songs.indexOf(list[0]));
+    playSong(0);
   }
 });
 
