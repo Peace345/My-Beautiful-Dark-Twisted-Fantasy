@@ -79,14 +79,14 @@ let currentAlbum = {
         title: "Higher",
         versions: [
       {
-        version: "V1",
-        file: "higher.mp3",
-        artist: "Kanye West"
-      },
-      {
         version: "V6",
         file: "higherv6.mp3",
         artist: "Kanye West, Nicki Minaj, Bon Iver"
+      },
+      {
+        version: "V1",
+        file: "higher.mp3",
+        artist: "Kanye West"
       }
     ]
   },
@@ -94,15 +94,15 @@ let currentAlbum = {
           title: "All Of The Lights",
           versions: [
       {
+          version: "V31",
+          file: "allofthelightsv31.mp3",
+          artist: "Kanye West, Drake, Charlie Wilson"
+      },
+      {
           version: "V24",
           file: "ghettouniversityv24.mp3",
           artist: "Kanye West, Charlie Wilson, The WRLDFMS Tony Williams, John Legend"
       },
-      {
-          version: "V31",
-          file: "allofthelightsv31.mp3",
-          artist: "Kanye West, Drake, Charlie Wilson"
-      }
       ]
     },
       { file: "mamasboyv11.mp3", title: "Mamas Boy", artist: "Kanye West" },
@@ -142,7 +142,7 @@ function buildSongs() {
         if (group.dataset.opened) return;
         group.dataset.opened = true;
 
-        song.versions.forEach(version => {
+        song.versions.forEach((version, versionIndex) => {
 
           const div = document.createElement("div");
           div.className = "song";
@@ -161,16 +161,19 @@ function buildSongs() {
           `;
 
           div.onclick = (e) => {
-            e.stopPropagation();
+  e.stopPropagation();
 
-            window.audio.src = version.file;
-            window.audio.play();
+  currentIndex = i;
+  currentVersionIndex = versionIndex;
 
-            updateMediaSession({
-              title: song.title,
-              artist: version.artist
-            });
-          };
+  window.audio.src = version.file;
+  window.audio.play();
+
+  updateMediaSession({
+    title: song.title,
+    artist: version.artist
+  });
+};
 
           group.after(div);
 
@@ -211,18 +214,18 @@ function playSong(i, versionIndex = null) {
 
   const song = currentAlbum.songs[i];
 
-  // SONG WITH MULTIPLE VERSIONS
+  // Version group
   if (song.versions) {
 
-    // If no version was specified, start with the LAST version
-    // because your versions are stored highest → lowest.
+    // Autoplay starts with the LOWEST version
+    // Your array is highest → lowest, so that's the last item.
     if (versionIndex === null) {
       versionIndex = song.versions.length - 1;
     }
 
-    const version = song.versions[versionIndex];
-
     currentVersionIndex = versionIndex;
+
+    const version = song.versions[versionIndex];
 
     window.audio.src = version.file;
     window.audio.play();
@@ -235,7 +238,7 @@ function playSong(i, versionIndex = null) {
     return;
   }
 
-  // NORMAL SONG
+  // Normal song
   currentVersionIndex = null;
 
   window.audio.src = song.file;
@@ -314,11 +317,12 @@ audio.addEventListener("ended", () => {
 
   const song = currentAlbum.songs[currentIndex];
 
-  // If this is a version group
-  if (song.versions) {
+  // Version group
+  if (song.versions && currentVersionIndex !== null) {
 
-    // Move BACKWARD through the array:
-    // V1 → V2 → V3 → V4 → ... → V6
+    // Since the array is highest → lowest,
+    // move toward the beginning of the array:
+    // V1 → V4 → V5 → V6
     const nextVersion = currentVersionIndex - 1;
 
     if (nextVersion >= 0) {
@@ -326,6 +330,15 @@ audio.addEventListener("ended", () => {
       return;
     }
   }
+
+  // Move to the next album track
+  if (currentIndex < currentAlbum.songs.length - 1) {
+    playSong(currentIndex + 1);
+  } else {
+    // Restart album
+    playSong(0);
+  }
+});
 
   // Finished the song/version group → next album track
   if (currentIndex < currentAlbum.songs.length - 1) {
