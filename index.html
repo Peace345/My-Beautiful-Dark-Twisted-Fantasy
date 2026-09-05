@@ -381,6 +381,12 @@ window.addEventListener("DOMContentLoaded", () => {
   // AUTOPLAY THROUGH ALBUM
 audio.addEventListener("ended", () => {
 
+  console.log("ENDED FIRED", {
+    currentIndex,
+    currentVersionIndex,
+    song: currentAlbum.songs[currentIndex]
+  });
+
   if (!currentAlbum) return;
 
   const song = currentAlbum.songs[currentIndex];
